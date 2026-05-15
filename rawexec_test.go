@@ -51,6 +51,8 @@ func getTestBinary() ([]byte, error) {
 	}
 }
 
+type FnSignature func(uintptr)
+
 func TestCaller(t *testing.T) {
 	// Select binary for current architecture
 	bin, err := getTestBinary()
@@ -59,11 +61,10 @@ func TestCaller(t *testing.T) {
 	}
 
 	// Create Caller with binary
-	caller, err := rawexec.New(bin)
+	caller, err := rawexec.NewCallable[FnSignature](bin)
 	if err != nil {
 		t.Fatalf("new failed: %v", err)
 	}
-	defer caller.Free()
 
 	// Test first call
 	args := &Args{In: [2]float64{1000.0, 2456.0}}
@@ -85,7 +86,7 @@ func TestCaller(t *testing.T) {
 func TestInvalidBinarySize(t *testing.T) {
 	// Test oversized binary
 	bin := make([]byte, 1<<30) // Too large
-	_, err := rawexec.New(bin)
+	_, err := rawexec.NewCallable[FnSignature](bin)
 	if err == nil {
 		t.Fatal("expected error for oversized binary")
 	}
@@ -99,15 +100,73 @@ func BenchmarkCaller(b *testing.B) {
 	}
 
 	// Create Caller with binary
-	caller, err := rawexec.New(bin)
+	caller, err := rawexec.NewCallable[FnSignature](bin)
 	if err != nil {
 		b.Fatal(err)
 	}
-	defer caller.Free()
 
 	// Benchmark calling the binary
 	args := &Args{In: [2]float64{1000.0, 2456.0}}
 	for i := 0; i < b.N; i++ {
 		caller.Call(uintptr(unsafe.Pointer(args)))
+	}
+}
+
+func TestLibrary(t *testing.T) {
+	bin, err := getTestBinary()
+	if err != nil {
+		t.Skip(err)
+	}
+
+	lib, err := rawexec.NewLibrary(bin)
+	if err != nil {
+		t.Fatalf("NewLibrary failed: %v", err)
+	}
+
+	// BaseAddr should return a non-zero address
+	if lib.BaseAddr() == 0 {
+		t.Error("BaseAddr returned zero")
+	}
+
+}
+
+func TestEmptyBinary(t *testing.T) {
+	_, err := rawexec.NewCallable[FnSignature]([]byte{})
+	if err == nil {
+		t.Fatal("expected error for empty binary")
+	}
+}
+
+func TestDifferentSignatures(t *testing.T) {
+	bin, err := getTestBinary()
+	if err != nil {
+		t.Skip(err)
+	}
+
+	// Test with a different function signature type
+	type OtherSig func(unsafe.Pointer)
+	caller, err := rawexec.NewCallable[OtherSig](bin)
+	if err != nil {
+		t.Fatalf("NewCallable with different signature failed: %v", err)
+	}
+
+	args := &Args{In: [2]float64{1.0, 2.0}}
+	caller.Call(unsafe.Pointer(args))
+	if args.Out != 3.0 {
+		t.Errorf("expected 3.0, got %v", args.Out)
+	}
+}
+
+func TestNewExecutableMemoryBounds(t *testing.T) {
+	// Zero size
+	_, err := rawexec.NewExecutableMemory(0)
+	if err == nil {
+		t.Error("expected error for zero size")
+	}
+
+	// Over max size
+	_, err = rawexec.NewExecutableMemory(rawexec.MaxMemSize + 1)
+	if err == nil {
+		t.Error("expected error for size over MaxMemSize")
 	}
 }

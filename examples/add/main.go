@@ -19,6 +19,8 @@ const (
 	binFname = "sse_add_amd64.bin" // Output binary file
 )
 
+type FnSignature func(uintptr)
+
 // Args holds input and output values for the binary.
 type Args struct {
 	In  [2]float64 // Input values
@@ -50,11 +52,10 @@ func main() {
 	}()
 
 	// Create Caller with binary
-	caller, err := rawexec.New(bin)
+	caller, err := rawexec.NewCallable[FnSignature](bin)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer caller.Free()
 
 	// Initialize Args struct and call binary
 	args := &Args{In: [2]float64{1000.0, 2456.0}}
