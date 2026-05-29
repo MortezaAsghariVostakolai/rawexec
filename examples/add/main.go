@@ -52,7 +52,7 @@ func main() {
 	}()
 
 	// Create Caller with binary
-	caller, err := rawexec.NewCallable[FnSignature](bin)
+	caller, err := rawexec.NewCaller[FnSignature](bin)
 	if err != nil {
 		log.Fatal(err)
 	}

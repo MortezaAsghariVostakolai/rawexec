@@ -135,7 +135,7 @@ const (
 // The returned Caller embeds an [ExecutableMemory] and provides access to
 // BaseAddr for computing function offsets. The memory is automatically freed
 // by the GC when the Caller becomes unreachable.
-func NewCallable[Fn any](bin []byte) (*Caller[Fn], error) {
+func NewCaller[Fn any](bin []byte) (*Caller[Fn], error) {
 	if len(bin) < 1 {
 		return nil, fmt.Errorf("can use empty binary")
 	}
@@ -257,6 +257,6 @@ type ExecutableMemory struct {
 }
 
 // BaseAddr returns the starting address of the executable memory.
-func (lib *ExecutableMemory) BaseAddr() uintptr {
-	return lib.baseAddr
+func (em *ExecutableMemory) BaseAddr() uintptr {
+	return em.baseAddr
 }

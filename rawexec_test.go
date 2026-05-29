@@ -61,7 +61,7 @@ func TestCaller(t *testing.T) {
 	}
 
 	// Create Caller with binary
-	caller, err := rawexec.NewCallable[FnSignature](bin)
+	caller, err := rawexec.NewCaller[FnSignature](bin)
 	if err != nil {
 		t.Fatalf("new failed: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestCaller(t *testing.T) {
 func TestInvalidBinarySize(t *testing.T) {
 	// Test oversized binary
 	bin := make([]byte, 1<<30) // Too large
-	_, err := rawexec.NewCallable[FnSignature](bin)
+	_, err := rawexec.NewCaller[FnSignature](bin)
 	if err == nil {
 		t.Fatal("expected error for oversized binary")
 	}
@@ -100,7 +100,7 @@ func BenchmarkCaller(b *testing.B) {
 	}
 
 	// Create Caller with binary
-	caller, err := rawexec.NewCallable[FnSignature](bin)
+	caller, err := rawexec.NewCaller[FnSignature](bin)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestLibrary(t *testing.T) {
 }
 
 func TestEmptyBinary(t *testing.T) {
-	_, err := rawexec.NewCallable[FnSignature]([]byte{})
+	_, err := rawexec.NewCaller[FnSignature]([]byte{})
 	if err == nil {
 		t.Fatal("expected error for empty binary")
 	}
@@ -145,9 +145,9 @@ func TestDifferentSignatures(t *testing.T) {
 
 	// Test with a different function signature type
 	type OtherSig func(unsafe.Pointer)
-	caller, err := rawexec.NewCallable[OtherSig](bin)
+	caller, err := rawexec.NewCaller[OtherSig](bin)
 	if err != nil {
-		t.Fatalf("NewCallable with different signature failed: %v", err)
+		t.Fatalf("NewCaller with different signature failed: %v", err)
 	}
 
 	args := &Args{In: [2]float64{1.0, 2.0}}

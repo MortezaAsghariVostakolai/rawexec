@@ -8,13 +8,14 @@ import (
 	"syscall"
 )
 
+const (
+	prot  = syscall.PROT_READ | syscall.PROT_WRITE | syscall.PROT_EXEC
+	flags = syscall.MAP_PRIVATE | syscall.MAP_ANON
+)
+
 // alloc allocates readable, writable, and executable memory for the given size.
 func alloc(size int) ([]byte, error) {
-	prot := syscall.PROT_READ | syscall.PROT_WRITE | syscall.PROT_EXEC
-	flags := syscall.MAP_PRIVATE | syscall.MAP_ANON
-	fd := -1
-	offset := 0
-	b, err := syscall.Mmap(fd, int64(offset), size, prot, flags)
+	b, err := syscall.Mmap(-1, 0, size, prot, flags)
 	if err != nil {
 		return nil, fmt.Errorf("mmap failed: %w", err)
 	}
